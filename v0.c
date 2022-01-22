@@ -4,9 +4,9 @@
 
 
 void swap(int  ***a, int  ***b) {
-  int  **tmp = **a;
-  **a = **b;
-  **b = tmp;
+  int  **tmp = *a;
+  *a = *b;
+  *b = tmp;
 }
     
 
@@ -46,7 +46,7 @@ int main(int argc, char **argv){
         newising[i] = (int *)malloc(n * sizeof(int));
     }
 
-    for(int i = 0 ; i < k ; i++){
+    for(int l = 0 ; l < k ; l++){
         for(int i = 0 ; i < n ; i++){
             for(int j = 0 ; j < n ; j++){
                 int sum = ising[((i+1)+n)%n][(j+n)%n] + ising[((i-1)+n)%n][(j+n)%n] + ising[(i+n)%n][((j+1)+n)%n] + ising[(i+n)%n][((j-1)+n)%n] + ising[(i+n)%n][(j+n)%n];
@@ -69,6 +69,7 @@ int main(int argc, char **argv){
         
     }
 
-    
+    free(ising);
+    free(newising);
     return 0 ; 
 }
