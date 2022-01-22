@@ -20,8 +20,8 @@ void swap(int  **a, int  **b) {
 
 __global__ void moment(int *ising, int *newising, int n){
     int sum = ising[(threadIdx.x+n)%(n*n)] + ising[(threadIdx.x-n)%(n*n)]
-    + ising[threadIdx.x + 1 - (n - 1)*(threadIdx.x%n == n - 1)]
-    + ising[threadIdx.x - 1 + (n - 1)*(threadIdx.x%n == 0)]
+    + ising[threadIdx.x + 1 - n*(threadIdx.x%n == n - 1)]
+    + ising[threadIdx.x - 1 + n*(threadIdx.x%n == 0)]
     + ising[threadIdx.x];
     if(sum > 0)
         newising[threadIdx.x] = 1 ;
