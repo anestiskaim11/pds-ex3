@@ -19,8 +19,8 @@ void swap(int  **a, int  **b) {
 }
 
 __global__ void moment(int *ising, int *newising, int n, int b){
-      for(int i = (threadIdx.x/b)*b ; i < (threadIdx.x/b)*b + b; i++){
-        for(int j = (threadIdx.x%b)*b ; j < (threadIdx.x%b)*b + b; j++){
+      for(int i = (threadIdx.x*b/n)*b ; i < (threadIdx.x*b/n)*b + b; i++){
+        for(int j = (threadIdx.x%(n/b))*b ; j < (threadIdx.x%(n/b))*b + b; j++){
           int sum = ising[(i*n + j +n)%(n*n)] + ising[(i*n + j -n)%(n*n)]
           + ising[i*n + j + 1 - n*(j%n == n - 1)]
           + ising[i*n + j - 1 + n*(j%n == 0)]
