@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/time.h>
 
 int *unroll(int **ising, int n){
     int *ising1d = (int *)malloc(n * n * sizeof(int));
@@ -19,23 +20,25 @@ void swap(int  **a, int  **b) {
 }
 
 __global__ void moment(int *ising, int *newising, int n){
-    int sum = ising[(threadIdx.x+n)%(n*n)] + ising[(threadIdx.x-n)%(n*n)]
-    + ising[threadIdx.x + 1 - n*(threadIdx.x%n == n - 1)]
-    + ising[threadIdx.x - 1 + n*(threadIdx.x%n == 0)]
-    + ising[threadIdx.x];
+    //printf("%d\n", blockIdx.x);
+    if(threadIdx.x == 1023) printf("%d\n", threadIdx.x);
+    int sum = ising[(blockIdx.x*1024 + threadIdx.x+n)%(n*n)] + ising[(blockIdx.x*1024 + threadIdx.x-n)%(n*n)]
+    + ising[blockIdx.x*1024 + threadIdx.x + 1 - n*(threadIdx.x%n == n - 1)]
+    + ising[blockIdx.x*1024 + threadIdx.x - 1 + n*(threadIdx.x%n == 0)]
+    + ising[blockIdx.x*1024 + threadIdx.x];
     if(sum > 0)
-        newising[threadIdx.x] = 1 ;
+        newising[blockIdx.x*1024 + threadIdx.x] = 1 ;
     else
-        newising[threadIdx.x] = -1 ;
+        newising[blockIdx.x*1024 + threadIdx.x] = -1 ;
     
 }
 
 int main(int argc, char **argv){
 
     //size of Ising model
-    int n = 2 ;
+    int n = 256 ;
     // number of iterations
-    int k = 2 ;
+    int k = 100 ;
 
     srand(time(NULL));
 
@@ -68,27 +71,33 @@ int main(int argc, char **argv){
     cudaMalloc((void**)&d_newising, size);
     
     
-    
+    struct timeval start, end;
+    double time;
+    gettimeofday(&start, NULL);
 
+    int blocks = (n*n - 1)/1024 + 1;
     for(int l = 0 ; l < k ; l++){
         //copy data to gpu
         cudaMemcpy(d_ising, ising, size, cudaMemcpyHostToDevice);
         //call function on gpu with n*n threads
-        moment<<<1,n*n>>>(d_ising, d_newising, n);
+        moment<<<blocks,n*n/blocks>>>(d_ising, d_newising, n);
         //copy result from gpu
         cudaMemcpy(newising, d_newising, size, cudaMemcpyDeviceToHost);
 
         swap(&ising,&newising);
 
-        for(int i = 0 ; i < n ; i++){
+        /*for(int i = 0 ; i < n ; i++){
             for(int j = 0 ; j < n ; j++){
                 printf("%d " , ising[i*n + j]);
             }
             printf("\n");
         }
-        printf("\n");
+        printf("\n");*/
         
     }
+    gettimeofday(&end, NULL);
+    time = (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
+    printf("time: %f\n", time);
     //free pointers
     free(ising);
     free(newising);
