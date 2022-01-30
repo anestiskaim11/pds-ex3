@@ -14,7 +14,7 @@ void swap(int  ***a, int  ***b) {
 int main(int argc, char **argv){
 
     //size of Ising model 
-    int n = 1024 ;
+    int n = 2048 ;
     // number of iterations 
     int k = 100 ; 
 
@@ -49,9 +49,10 @@ int main(int argc, char **argv){
 
     struct timeval start, end;
     double time;
-    gettimeofday(&start, NULL);
+    
 
     for(int l = 0 ; l < k ; l++){
+        gettimeofday(&start, NULL);
         for(int i = 0 ; i < n ; i++){
             for(int j = 0 ; j < n ; j++){
                 int sum = ising[((i+1)+n)%n][(j+n)%n] + ising[((i-1)+n)%n][(j+n)%n] + ising[(i+n)%n][((j+1)+n)%n] + ising[(i+n)%n][((j-1)+n)%n] + ising[(i+n)%n][(j+n)%n];
@@ -61,11 +62,10 @@ int main(int argc, char **argv){
                     newising[i][j] = -1 ;
             }
         }
+        gettimeofday(&end, NULL);
+        time += (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
 
         swap(&ising,&newising);
-
-       
-        
     }
 
     // for(int i = 0 ; i < n ; i++){
@@ -76,8 +76,8 @@ int main(int argc, char **argv){
     // }
     // printf("\n");
 
-    gettimeofday(&end, NULL);
-    time = (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
+    
+    
     printf("time: %f\n", time);
 
     free(ising);
