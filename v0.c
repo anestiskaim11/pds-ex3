@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/time.h>
 
 
 void swap(int  ***a, int  ***b) {
@@ -13,7 +14,7 @@ void swap(int  ***a, int  ***b) {
 int main(int argc, char **argv){
 
     //size of Ising model 
-    int n = 256 ;
+    int n = 1024 ;
     // number of iterations 
     int k = 100 ; 
 
@@ -46,6 +47,10 @@ int main(int argc, char **argv){
         newising[i] = (int *)malloc(n * sizeof(int));
     }
 
+    struct timeval start, end;
+    double time;
+    gettimeofday(&start, NULL);
+
     for(int l = 0 ; l < k ; l++){
         for(int i = 0 ; i < n ; i++){
             for(int j = 0 ; j < n ; j++){
@@ -62,13 +67,18 @@ int main(int argc, char **argv){
        
         
     }
-    for(int i = 0 ; i < n ; i++){
-        for(int j = 0 ; j < n ; j++){
-            printf("%d " , ising[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
+
+    // for(int i = 0 ; i < n ; i++){
+    //     for(int j = 0 ; j < n ; j++){
+    //         printf("%d " , ising[i][j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    gettimeofday(&end, NULL);
+    time = (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
+    printf("time: %f\n", time);
 
     free(ising);
     free(newising);
