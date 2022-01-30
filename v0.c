@@ -13,9 +13,9 @@ void swap(int  ***a, int  ***b) {
 int main(int argc, char **argv){
 
     //size of Ising model 
-    int n = 2 ;
+    int n = 256 ;
     // number of iterations 
-    int k = 2 ; 
+    int k = 100 ; 
 
     srand(time(NULL));
 
@@ -33,13 +33,13 @@ int main(int argc, char **argv){
         }
     }
 
-    for(int i = 0 ; i < n ; i++){
-        for(int j = 0 ; j < n ; j++){
-            printf("%d " , ising[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
+    // for(int i = 0 ; i < n ; i++){
+    //     for(int j = 0 ; j < n ; j++){
+    //         printf("%d " , ising[i][j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
 
     int **newising = (int **)malloc(n * sizeof(int *));
     for(int i = 0 ; i  < n ; i++){
@@ -59,15 +59,16 @@ int main(int argc, char **argv){
 
         swap(&ising,&newising);
 
-        for(int i = 0 ; i < n ; i++){
-            for(int j = 0 ; j < n ; j++){
-                printf("%d " , ising[i][j]);
-            }
-            printf("\n");
-        }
-        printf("\n");
+       
         
     }
+    for(int i = 0 ; i < n ; i++){
+        for(int j = 0 ; j < n ; j++){
+            printf("%d " , ising[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 
     free(ising);
     free(newising);
