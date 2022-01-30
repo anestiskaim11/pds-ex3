@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#define N 8
+#include <sys/time.h>
+#define B 6
 
 int *unroll(int **ising, int n){
     int *ising1d = (int *)malloc(n * n * sizeof(int));
@@ -21,37 +22,43 @@ void swap(int  **a, int  **b) {
 
 __global__ void moment(int *ising, int *newising, int n, int b){
       //create shared memory
-      __shared__ int temp [N*N];
-      for(int i = (threadIdx.x*b/n)*b ; i < (threadIdx.x*b/n)*b + b; i++){
-        for(int j = (threadIdx.x%(n/b))*b ; j < (threadIdx.x%(n/b))*b + b; j++){
-            temp[i*n + j] = ising[i*n + j];
-        }
+      __shared__ int temp [B][B];
+      int i = (blockIdx.x*b/n)*b + threadIdx.x/b;
+      int j = (blockIdx.x)%(n/b)*b + threadIdx.x%b;
+      temp[threadIdx.x/b+1][threadIdx.x%b+1] = ising[i*n + j];
+      if(threadIdx.x/b == 0){
+          temp[0][threadIdx.x%b+1] = ising[i*n + j - n + n*n*(i==0)];
+      }
+      if(threadIdx.x/b == b-1){
+          temp[b+1][threadIdx.x%b+1] = ising[i*n + j + n - n*n*(i==n-1)];
+      }
+      if(threadIdx.x%b == 0){
+          temp[threadIdx.x/b+1][0] = ising[i*n + j - 1 + n*(j%n == 0)];
+      }
+      if(threadIdx.x%b == b-1){
+          temp[threadIdx.x/b+1][b+1] = ising[i*n + j + 1 - n*(j%n == n - 1)];
       }
       //wait all threads to finish
       __syncthreads();
 
       //do calculations
-      for(int k = (threadIdx.x*b/n)*b ; k < (threadIdx.x*b/n)*b + b; k++){
-        for(int l = (threadIdx.x%(n/b))*b ; l < (threadIdx.x%(n/b))*b + b; l++){
-          int sum = temp[k*n + l + n -n*n*(k%n == n - 1)] + temp[k*n + l - n + n*n*(k%n == 0)]
-          + temp[k*n + l + 1 - n*(l%n == n - 1)]
-          + temp[k*n + l - 1 + n*(l%n == 0)]
-          + temp[k*n + l];
-          if(sum > 0){
-            newising[k*n + l] = 1 ;
-          }
-          else
-            newising[k*n + l] = -1 ;
-        }
-      }
+      int sum = temp[threadIdx.x/b+2][threadIdx.x%b+1] + temp[threadIdx.x/b][threadIdx.x%b+1]
+      + temp[threadIdx.x/b+1][threadIdx.x%b+2]
+      + temp[threadIdx.x/b+1][threadIdx.x%b]
+      + temp[threadIdx.x/b+1][threadIdx.x%b+1];
+      if(sum > 0)
+        newising[i*n + j] = 1 ;
+      else
+        newising[i*n + j] = -1 ;
+      
 }
 
 int main(int argc, char **argv){
 
     //size of Ising model
-    int n = 8 ;
+    int n = 1024;
     // number of iterations
-    int k = 2 ;
+    int k = 10000;
 
     srand(time(NULL));
 
@@ -82,30 +89,38 @@ int main(int argc, char **argv){
     //allocate on gpu
     cudaMalloc((void**)&d_ising, size);
     cudaMalloc((void**)&d_newising, size);
+    int b = 4;
+    int blocks = (n*n)/(b*b);
     
-    //b size
-    int b = 2;
-    
+    struct timeval start, end;
+    double time;
 
     for(int l = 0 ; l < k ; l++){
         //copy data to gpu
         cudaMemcpy(d_ising, ising, size, cudaMemcpyHostToDevice);
         //call function on gpu with n*n threads
-        moment<<<1,(n*n)/(b*b)>>>(d_ising, d_newising, n, b);
+        gettimeofday(&start, NULL);
+        moment<<<blocks,b*b>>>(d_ising, d_newising, n, b);
+        gettimeofday(&end, NULL);
         //copy result from gpu
         cudaMemcpy(newising, d_newising, size, cudaMemcpyDeviceToHost);
 
+        time += (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
+
         swap(&ising,&newising);
 
-        for(int i = 0 ; i < n ; i++){
+        /*for(int i = 0 ; i < n ; i++){
             for(int j = 0 ; j < n ; j++){
                 printf("%d " , ising[i*n + j]);
             }
             printf("\n");
         }
-        printf("\n");
+        printf("\n");*/
         
     }
+
+    printf("time: %f\n", time);
+
     //free pointers
     free(ising);
     free(newising);
@@ -113,5 +128,3 @@ int main(int argc, char **argv){
     cudaFree(d_newising);
     return 0 ;
 }
-
-
