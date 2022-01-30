@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
-#define B 6
-
+#define B 34
 int *unroll(int **ising, int n){
     int *ising1d = (int *)malloc(n * n * sizeof(int));
     for(int i = 0 ; i < n ; i++){
@@ -56,9 +55,9 @@ __global__ void moment(int *ising, int *newising, int n, int b){
 int main(int argc, char **argv){
 
     //size of Ising model
-    int n = 1024;
+    int n = 2048;
     // number of iterations
-    int k = 10000;
+    int k = 100;
 
     srand(time(NULL));
 
@@ -72,13 +71,13 @@ int main(int argc, char **argv){
         }
     }
 
-    for(int i = 0 ; i < n ; i++){
+    /*for(int i = 0 ; i < n ; i++){
         for(int j = 0 ; j < n ; j++){
             printf("%d " , ising[i*n + j]);
         }
         printf("\n");
     }
-    printf("\n");
+    printf("\n");*/
 
     int *newising = (int *)malloc(n * n * sizeof(int));
     
@@ -89,7 +88,7 @@ int main(int argc, char **argv){
     //allocate on gpu
     cudaMalloc((void**)&d_ising, size);
     cudaMalloc((void**)&d_newising, size);
-    int b = 4;
+    int b = 32;
     int blocks = (n*n)/(b*b);
     
     struct timeval start, end;
@@ -104,20 +103,21 @@ int main(int argc, char **argv){
         gettimeofday(&end, NULL);
         //copy result from gpu
         cudaMemcpy(newising, d_newising, size, cudaMemcpyDeviceToHost);
-
         time += (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
+          
 
         swap(&ising,&newising);
 
-        /*for(int i = 0 ; i < n ; i++){
+        
+        
+    }
+    /*for(int i = 0 ; i < n ; i++){
             for(int j = 0 ; j < n ; j++){
                 printf("%d " , ising[i*n + j]);
             }
             printf("\n");
         }
         printf("\n");*/
-        
-    }
 
     printf("time: %f\n", time);
 
