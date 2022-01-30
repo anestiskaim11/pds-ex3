@@ -1,3 +1,4 @@
+%%cu
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -21,7 +22,7 @@ void swap(int  **a, int  **b) {
 
 __global__ void moment(int *ising, int *newising, int n, int b){
       //if(blockIdx.x == 0) printf("%d\n", blockIdx.x);
-      if(blockIdx.x == 3) printf("%d\n", blockIdx.x);
+      //if(blockIdx.x == 3) printf("%d\n", blockIdx.x);
       for(int i = ((blockIdx.x*1024 + threadIdx.x)*b/n)*b ; i < ((blockIdx.x*1024 + threadIdx.x)*b/n)*b + b; i++){
         for(int j = ((blockIdx.x*1024 + threadIdx.x)%(n/b))*b ; j < ((blockIdx.x*1024 + threadIdx.x)%(n/b))*b + b; j++){
           int sum = ising[i*n + j + n - n*n*(i==n-1)] + ising[i*n + j - n + n*n*(i==0)]
@@ -39,9 +40,9 @@ __global__ void moment(int *ising, int *newising, int n, int b){
 int main(int argc, char **argv){
 
     //size of Ising model
-    int n = 4;
+    int n = 2048;
     // number of iterations
-    int k = 2;
+    int k = 100;
 
     srand(time(NULL));
 
@@ -55,13 +56,13 @@ int main(int argc, char **argv){
         }
     }
 
-    for(int i = 0 ; i < n ; i++){
+    /*for(int i = 0 ; i < n ; i++){
         for(int j = 0 ; j < n ; j++){
             printf("%d " , ising[i*n + j]);
         }
         printf("\n");
     }
-    printf("\n");
+    printf("\n");*/
 
     int *newising = (int *)malloc(n * n * sizeof(int));
     
@@ -74,35 +75,39 @@ int main(int argc, char **argv){
     cudaMalloc((void**)&d_newising, size);
     
     //b size
-    int b = 2;
+    int b = 32;
 
     int blocks = ((n*n/(b*b))-1)/1024 + 1;
     
     struct timeval start, end;
     double time;
-    gettimeofday(&start, NULL);
+    
 
     for(int l = 0 ; l < k ; l++){
         //copy data to gpu
         cudaMemcpy(d_ising, ising, size, cudaMemcpyHostToDevice);
         //call function on gpu with n*n threads
+        gettimeofday(&start, NULL);
         moment<<<blocks,(n*n/(b*b))/blocks>>>(d_ising, d_newising, n, b);
+        gettimeofday(&end, NULL);
         //copy result from gpu
         cudaMemcpy(newising, d_newising, size, cudaMemcpyDeviceToHost);
+        time += (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
 
         swap(&ising,&newising);
 
-        for(int i = 0 ; i < n ; i++){
+       
+    }
+
+     /*for(int i = 0 ; i < n ; i++){
             for(int j = 0 ; j < n ; j++){
                 printf("%d " , ising[i*n + j]);
             }
             printf("\n");
         }
-        printf("\n");
+        printf("\n");*/
         
-    }
-    gettimeofday(&end, NULL);
-    time = (double)((end.tv_usec - start.tv_usec)/1.0e6 + end.tv_sec - start.tv_sec);
+    
     printf("time: %f\n", time);
 
     //free pointers
