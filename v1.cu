@@ -20,8 +20,6 @@ void swap(int  **a, int  **b) {
 }
 
 __global__ void moment(int *ising, int *newising, int n){
-    //printf("%d\n", blockIdx.x);
-    //if(threadIdx.x == 1023) printf("%d\n", threadIdx.x);
     int sum = ising[(blockIdx.x*1024 + threadIdx.x+n)%(n*n)] + ising[(blockIdx.x*1024 + threadIdx.x-n)%(n*n)]
     + ising[blockIdx.x*1024 + threadIdx.x + 1 - n*(threadIdx.x%n == n - 1)]
     + ising[blockIdx.x*1024 + threadIdx.x - 1 + n*(threadIdx.x%n == 0)]
