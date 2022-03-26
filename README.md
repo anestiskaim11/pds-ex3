@@ -1,4 +1,6 @@
-#Ising Problem using CUDA parallelisation
+#pds-ex3
+##Ising Problem using CUDA parallelisation
+
 ##V0: sequential version
 
 ##V1: One thread per moment
