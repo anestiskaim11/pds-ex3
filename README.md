@@ -1,4 +1,12 @@
-[report-pds-ex3 .pdf](https://github.com/anestiskaim11/pds-ex3/files/8355819/report-pds-ex3.pdf)
+#Ising Problem using CUDA parallelisation
+##V0: sequential version
 
+##V1: One thread per moment
+
+##V2: One block (bxb) of moments per thread
+
+##V3: One block of moments per cuda block using shared memory
+
+##Results:
 
 
